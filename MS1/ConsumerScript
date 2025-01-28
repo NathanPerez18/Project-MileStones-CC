@@ -1,1 +1,37 @@
+# Importing required libraries
+import os
+import json
+from google.cloud import pubsub_v1
 
+# Set the path to the service account key (JSON file)
+# Ensure the JSON file is in the same directory
+for file in os.listdir():
+    if file.endswith(".json"):
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = file
+        break
+
+# Define project ID, topic, and subscription names 
+project_id = "id"           
+subscription_id = "subscription" 
+
+# Initialize the Pub/Sub subscriber client
+subscriber = pubsub_v1.SubscriberClient()
+subscription_path = subscriber.subscription_path(project_id, subscription_id)
+
+# Define the callback function for received messages
+def callback(message):
+    # Deserialize the message data (bytes) into a dictionary
+    data = json.loads(message.data.decode("utf-8"))
+    print(f"Received message: {data}")  # Print the deserialized dictionary
+    message.ack()  # Acknowledge the message as processed
+
+# Subscribe to the topic and listen for messages
+streaming_pull_future = subscriber.subscribe(subscription_path, callback=callback)
+print(f"Listening for messages on {subscription_path}...")
+
+# Keep the listener running
+try:
+    streaming_pull_future.result()  # Block until an exception occurs
+except KeyboardInterrupt:
+    streaming_pull_future.cancel()  # Gracefully stop the listener
+    print("Stopped listening for messages.")

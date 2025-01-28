@@ -1,1 +1,31 @@
+# Importing required libraries
+import os
+import csv
+import json
+from google.cloud import pubsub_v1
+
+# Set the path to the service account key (JSON file)
+# Ensure the JSON file is in the same directory
+for file in os.listdir():
+    if file.endswith(".json"):
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = file
+        break
+
+# Define project ID and topic name
+project_id = "id"  
+topic_id = "topic"       
+
+# Initialize the Pub/Sub publisher client
+publisher = pubsub_v1.PublisherClient()
+topic_path = publisher.topic_path(project_id, topic_id)
+
+# Read data from Labels.csv and publish it to the topic
+with open("Labels.csv", "r") as file:
+    reader = csv.DictReader(file)  # Read CSV as a dictionary
+    for row in reader:
+        # Serialize the row into a JSON string
+        message = json.dumps(row).encode("utf-8")  # Convert to bytes for Pub/Sub
+        # Publish the message to the topic
+        future = publisher.publish(topic_path, message)
+        print(f"Published message ID: {future.result()}")  # Ensure successful publication
 
