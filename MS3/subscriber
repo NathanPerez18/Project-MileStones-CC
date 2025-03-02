@@ -1,0 +1,15 @@
+from google.cloud import pubsub_v1
+
+subscriber = pubsub_v1.SubscriberClient()
+subscription_path = "projects/pure-spring-449721-p3/subscriptions/output-sub"
+
+def callback(message):
+    print(f"Received message: {message.data.decode('utf-8')}")
+    message.ack()
+
+subscriber.subscribe(subscription_path, callback=callback)
+print(f"Listening for messages on {subscription_path}...")
+
+import time
+while True:
+    time.sleep(10)
